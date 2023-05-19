@@ -342,6 +342,14 @@ function gameLoop() {
   checkCollisions();
   opponentAttacksLogic();
   draw();
+  
+  if(touchX !== null && touchY !== null){
+    if(isTouchInsideSpaceship()){
+      keys['ArrowUp'] = true;
+    }else {
+      keys['ArrowUp'] = false;
+    }
+  }
   requestAnimationFrame(gameLoop);
 }
 
