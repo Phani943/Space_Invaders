@@ -32,8 +32,8 @@ canvas.addEventListener('touchend', handleTouchEnd);
 function handleTouchStart(event){
   event.preventDefault();
   const touch = event.touches[0];
-  const touchX = touch.pageX - canvas.offsetLeft;
-  const touchY = touch.pageY - canvas.offsetTop;
+  const touchX = touch.clientX - canvas.offsetLeft;
+  const touchY = touch.clientY - canvas.offsetTop;
   if(isTouchInsideSpaceship(touchX, touchY))
   {
     keys['ArrowUp'] = true;
