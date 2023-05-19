@@ -24,33 +24,44 @@ let score;
 let lives;
 let keys = {};
 
-// Touch event handling
+
 canvas.addEventListener('touchstart', handleTouchStart);
 canvas.addEventListener('touchend', handleTouchEnd);
+canvas.addEventListener('touchmove', handleTouchMove);
 
+// Touch variables
+let touchX = null;
+let touchY = null;
 
-function handleTouchStart(event){
+// Handle touch start event
+function handleTouchStart(event) {
   event.preventDefault();
   const touch = event.touches[0];
-  const touchX = touch.clientX - canvas.offsetLeft;
-  const touchY = touch.clientY - canvas.offsetTop;
-  if(isTouchInsideSpaceship(touchX, touchY))
-  {
-    keys['ArrowUp'] = true;
-  }
-  if(isTouchOnCanvas(touchX, touchY)){
-    fireBullet();
-  }
+  touchX = touch.clientX - canvas.offsetLeft;
+  touchY = touch.clientY - canvas.offsetTop;
 }
 
-function handleTouchEnd(event)
-{
+// Handle touch end event
+function handleTouchEnd(event) {
   event.preventDefault();
+  touchX = null;
+  touchY = null;
   keys['ArrowUp'] = false;
 }
 
-function isTouchInsideSpaceship(touchX, touchY){
+// Handle touch move event
+function handleTouchMove(event) {
+  event.preventDefault();
+  const touch = event.touches[0];
+  touchX = touch.clientX - canvas.offsetLeft;
+  touchY = touch.clientY - canvas.offsetTop;
+}
+
+// Check if touch is inside the spaceship
+function isTouchInsideSpaceship() {
   return (
+    touchX !== null &&
+    touchY !== null &&
     touchX >= spaceship.x &&
     touchX <= spaceship.x + SPACESHIP_WIDTH &&
     touchY >= spaceship.y &&
@@ -58,33 +69,6 @@ function isTouchInsideSpaceship(touchX, touchY){
   );
 }
 
-function isTouchOnCanvas(touchX, touchY){
-  return(
-    touchX >= canvas.offsetLeft &&
-    touchX <= canvas.offsetHeight + canvas.width &&
-    touchY >= canvas.offsetTop &&
-    touchY <= canvas.offsetTop + canvas.height
-  );
-}
-
-function updateSpaceship(){
-  if(keys.ArrowLeft && spaceship.x > 0)
-  {
-    spaceship.x -= SPACESHIP_SPEED;
-  }
-
-  if(keys.ArrowRight && spaceship.x < WINDOW_WIDTH - SPACESHIP_WIDTH){
-    spaceship.x += SPACESHIP_SPEED;
-  }
-
-  if(keys.ArrowUp && spaceship.y > 0){
-    spaceship.y -= SPACESHIP_SPEED;
-  }
-
-  if(keys.ArrowDown && spaceship.y < WINDOW_HEIGHT - SPACESHIP_HEIGHT){
-    spaceship.y += SPACESHIP_SPEED;
-  }
-}
 // Load images
 const spaceship_img = new Image();
 spaceship_img.src = 'spaceship.png';
