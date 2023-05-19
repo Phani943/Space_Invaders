@@ -24,6 +24,67 @@ let score;
 let lives;
 let keys = {};
 
+// Touch event handling
+canvas.addEventListener('touchstart', handleTouchStart);
+canvas.addEventListener('touchend', handleTouchEnd);
+
+
+function handleTouchStart(event){
+  event.preventDefault();
+  const touch = event.touches[0];
+  const touchX = touch.pageX - canvas.offsetLeft;
+  const touchY = touch.pageY - canvas.offsetTop;
+  if(isTouchInsideSpaceship(touchX, touchY))
+  {
+    keys['ArrowUp'] = true;
+  }
+  if(isTouchOnCanvas(touchX, touchY)){
+    fireBullet();
+  }
+}
+
+function handleTouchEnd(event)
+{
+  event.preventDefault();
+  keys['ArrowUp'] = false;
+}
+
+function isTouchInsideSpaceship(touchX, touchY){
+  return (
+    touchX >= spaceship.x &&
+    touchX <= spaceship.x + SPACESHIP_WIDTH &&
+    touchY >= spaceship.y &&
+    touchY <= spaceship.y + SPACESHIP_HEIGHT
+  );
+}
+
+function isTouchOnCanvas(touchX, touchY){
+  return(
+    touchX >= canvas.offsetLeft &&
+    touchX <= canvas.offsetHeight + canvas.width &&
+    touchY >= canvas.offsetTop &&
+    touchY <= canvas.offsetTop + canvas.height
+  );
+}
+
+function updateSpaceship(){
+  if(keys.ArrowLeft && spaceship.x > 0)
+  {
+    spaceship.x -= SPACESHIP_SPEED;
+  }
+
+  if(keys.ArrowRight && spaceship.x < WINDOW_WIDTH - SPACESHIP_WIDTH){
+    spaceship.x += SPACESHIP_SPEED;
+  }
+
+  if(keys.ArrowUp && spaceship.y > 0){
+    spaceship.y -= SPACESHIP_SPEED;
+  }
+
+  if(keys.ArrowDown && spaceship.y < WINDOW_HEIGHT - SPACESHIP_HEIGHT){
+    spaceship.y += SPACESHIP_SPEED;
+  }
+}
 // Load images
 const spaceship_img = new Image();
 spaceship_img.src = 'spaceship.png';
