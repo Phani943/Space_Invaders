@@ -23,51 +23,7 @@ let opponentAttacks;
 let score;
 let lives;
 let keys = {};
-
-
-canvas.addEventListener('touchstart', handleTouchStart);
-canvas.addEventListener('touchend', handleTouchEnd);
-canvas.addEventListener('touchmove', handleTouchMove);
-
-// Touch variables
-let touchX = null;
-let touchY = null;
-
-// Handle touch start event
-function handleTouchStart(event) {
-  event.preventDefault();
-  const touch = event.touches[0];
-  touchX = touch.clientX - canvas.offsetLeft;
-  touchY = touch.clientY - canvas.offsetTop;
-}
-
-// Handle touch end event
-function handleTouchEnd(event) {
-  event.preventDefault();
-  touchX = null;
-  touchY = null;
-  keys['ArrowUp'] = false;
-}
-
-// Handle touch move event
-function handleTouchMove(event) {
-  event.preventDefault();
-  const touch = event.touches[0];
-  touchX = touch.clientX - canvas.offsetLeft;
-  touchY = touch.clientY - canvas.offsetTop;
-}
-
-// Check if touch is inside the spaceship
-function isTouchInsideSpaceship() {
-  return (
-    touchX !== null &&
-    touchY !== null &&
-    touchX >= spaceship.x &&
-    touchX <= spaceship.x + SPACESHIP_WIDTH &&
-    touchY >= spaceship.y &&
-    touchY <= spaceship.y + SPACESHIP_HEIGHT
-  );
-}
+let touch = {};
 
 // Load images
 const spaceship_img = new Image();
@@ -93,6 +49,9 @@ function init() {
   createAliens();
   document.addEventListener('keydown', handleKeyDown);
   document.addEventListener('keyup', handleKeyUp);
+  canvas.addEventListener('touchstart', handleTouchStart);
+  canvas.addEventListener('touchend', handleTouchEnd);
+  canvas.addEventListener('touchmove', handleTouchMove);
   requestAnimationFrame(gameLoop);
 }
 
@@ -119,6 +78,32 @@ function handleKeyDown(event) {
 // Handle keyup event
 function handleKeyUp(event) {
   keys[event.code] = false;
+}
+
+// Handle touch start event
+function handleTouchStart(event) {
+  event.preventDefault();
+  const rect = canvas.getBoundingClientRect();
+  touch.identifier = event.changedTouches[0].identifier;
+  touch.x = event.changedTouches[0].clientX - rect.left;
+  touch.y = event.changedTouches[0].clientY - rect.top;
+}
+
+// Handle touch end event
+function handleTouchEnd(event) {
+  event.preventDefault();
+  if (event.changedTouches[0].identifier === touch.identifier) {
+    touch = {};
+    keys['ArrowUp'] = false;
+  }
+}
+
+// Handle touch move event
+function handleTouchMove(event) {
+  event.preventDefault();
+  const rect = canvas.getBoundingClientRect();
+  touch.x = event.changedTouches[0].clientX - rect.left;
+  touch.y = event.changedTouches[0].clientY - rect.top;
 }
 
 // Fire bullet
@@ -199,10 +184,9 @@ function checkCollisions() {
     }
   }
 
-if(aliens.length === 2)
-{
+  if (aliens.length === 2) {
     createAliens();
-}
+  }
 }
 
 // Reset the game
@@ -258,8 +242,8 @@ function draw() {
   // Draw opponent attacks
   for (let i = 0; i < opponentAttacks.length; i++) {
     const opponentAttack = opponentAttacks[i];
-    context.fillStyle = 'red';
-    context.fillRect(
+    context.drawImage(
+      bullet_img,
       opponentAttack.x,
       opponentAttack.y,
       BULLET_WIDTH,
@@ -267,28 +251,33 @@ function draw() {
     );
   }
 
-  // Draw score
+  // Draw score and lives
   context.fillStyle = 'white';
   context.font = '24px Arial';
   context.fillText('Score: ' + score, 10, 30);
-
-  // Draw lives
-  context.fillText('Lives: ' + lives, WINDOW_WIDTH - 100, 30);
+  context.fillText('Lives: ' + lives, 10, 60);
 }
 
-// Update spaceship position
-function updateSpaceship() {
-  if (keys.ArrowLeft && spaceship.x > 0) {
+// Update the game
+function update() {
+  // Move spaceship
+  if (keys['ArrowLeft'] && spaceship.x > 0) {
     spaceship.x -= SPACESHIP_SPEED;
-  }
-
-  if (keys.ArrowRight && spaceship.x < WINDOW_WIDTH - SPACESHIP_WIDTH) {
+  } else if (
+    keys['ArrowRight'] &&
+    spaceship.x < WINDOW_WIDTH - SPACESHIP_WIDTH
+  ) {
     spaceship.x += SPACESHIP_SPEED;
+  } else if (keys['ArrowUp'] && spaceship.y > 0) {
+    spaceship.y -= SPACESHIP_SPEED;
+  } else if (
+    keys['ArrowDown'] &&
+    spaceship.y < WINDOW_HEIGHT - SPACESHIP_HEIGHT
+  ) {
+    spaceship.y += SPACESHIP_SPEED;
   }
-}
 
-// Update aliens position
-function updateAliens() {
+  // Move aliens
   for (let i = 0; i < aliens.length; i++) {
     const alien = aliens[i];
     alien.x += ALIEN_SPEED * alien.direction;
@@ -297,59 +286,37 @@ function updateAliens() {
       alien.y += ALIEN_HEIGHT;
     }
   }
-}
 
-// Update bullets position
-function updateBullets() {
-  for (let i = bullets.length - 1; i >= 0; i--) {
+  // Move bullets
+  for (let i = 0; i < bullets.length; i++) {
     const bullet = bullets[i];
     bullet.y -= BULLET_SPEED;
-    if (bullet.y <= 0) {
+    if (bullet.y < 0) {
       bullets.splice(i, 1);
     }
   }
-}
 
-// Update opponent attacks position
-function updateOpponentAttacks() {
-  for (let i = opponentAttacks.length - 1; i >= 0; i--) {
+  // Move opponent attacks
+  for (let i = 0; i < opponentAttacks.length; i++) {
     const opponentAttack = opponentAttacks[i];
     opponentAttack.y += BULLET_SPEED;
-    if (opponentAttack.y >= WINDOW_HEIGHT) {
+    if (opponentAttack.y > WINDOW_HEIGHT) {
       opponentAttacks.splice(i, 1);
     }
   }
-}
 
-// Opponent attacks
-function opponentAttacksLogic() {
+  // Randomly fire opponent attacks
   if (Math.random() < OPPONENT_ATTACK_RATE) {
-    const randomAlienIndex = Math.floor(Math.random() * aliens.length);
-    const randomAlien = aliens[randomAlienIndex];
-    createOpponentAttack(
-      randomAlien.x + ALIEN_WIDTH / 2,
-      randomAlien.y + ALIEN_HEIGHT
-    );
+    const randomAlien = aliens[Math.floor(Math.random() * aliens.length)];
+    createOpponentAttack(randomAlien.x + ALIEN_WIDTH / 2, randomAlien.y);
   }
 }
 
 // Game loop
 function gameLoop() {
-  updateSpaceship();
-  updateAliens();
-  updateBullets();
-  updateOpponentAttacks();
+  update();
   checkCollisions();
-  opponentAttacksLogic();
   draw();
-  
-  if(touchX !== null && touchY !== null){
-    if(isTouchInsideSpaceship()){
-      keys['ArrowUp'] = true;
-    }else {
-      keys['ArrowUp'] = false;
-    }
-  }
   requestAnimationFrame(gameLoop);
 }
 
