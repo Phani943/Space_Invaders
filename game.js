@@ -23,7 +23,6 @@ let opponentAttacks;
 let score;
 let lives;
 let keys = {};
-let touch = {};
 
 // Load images
 const spaceship_img = new Image();
@@ -49,10 +48,63 @@ function init() {
   createAliens();
   document.addEventListener('keydown', handleKeyDown);
   document.addEventListener('keyup', handleKeyUp);
-  canvas.addEventListener('touchstart', handleTouchStart);
-  canvas.addEventListener('touchend', handleTouchEnd);
-  canvas.addEventListener('touchmove', handleTouchMove);
   requestAnimationFrame(gameLoop);
+  // Add touch event listeners
+canvas.addEventListener('touchstart', handleTouchStart);
+canvas.addEventListener('touchmove', handleTouchMove);
+canvas.addEventListener('touchend', handleTouchEnd);
+
+// Handle touchstart event
+function handleTouchStart(event) {
+  // Prevent default behavior
+  event.preventDefault();
+
+  // Get the first touch object
+  const touch = event.touches[0];
+
+  // Check if the touch is on the left or right side of the canvas
+  if (touch.clientX < canvas.width / 2) {
+    // Set the left key to true
+    keys.ArrowLeft = true;
+  } else {
+    // Set the right key to true
+    keys.ArrowRight = true;
+  }
+
+  // Fire a bullet
+  fireBullet();
+}
+
+// Handle touchmove event
+function handleTouchMove(event) {
+  // Prevent default behavior
+  event.preventDefault();
+
+  // Get the first touch object
+  const touch = event.touches[0];
+
+  // Check if the touch is on the left or right side of the canvas
+  if (touch.clientX < canvas.width / 2) {
+    // Set the left key to true and the right key to false
+    keys.ArrowLeft = true;
+    keys.ArrowRight = false;
+  } else {
+    // Set the right key to true and the left key to false
+    keys.ArrowRight = true;
+    keys.ArrowLeft = false;
+  }
+}
+
+// Handle touchend event
+function handleTouchEnd(event) {
+  // Prevent default behavior
+  event.preventDefault();
+
+  // Set both keys to false
+  keys.ArrowLeft = false;
+  keys.ArrowRight = false;
+}
+
 }
 
 // Create aliens
@@ -78,32 +130,6 @@ function handleKeyDown(event) {
 // Handle keyup event
 function handleKeyUp(event) {
   keys[event.code] = false;
-}
-
-// Handle touch start event
-function handleTouchStart(event) {
-  event.preventDefault();
-  const rect = canvas.getBoundingClientRect();
-  touch.identifier = event.changedTouches[0].identifier;
-  touch.x = event.changedTouches[0].clientX - rect.left;
-  touch.y = event.changedTouches[0].clientY - rect.top;
-}
-
-// Handle touch end event
-function handleTouchEnd(event) {
-  event.preventDefault();
-  if (event.changedTouches[0].identifier === touch.identifier) {
-    touch = {};
-    keys['ArrowUp'] = false;
-  }
-}
-
-// Handle touch move event
-function handleTouchMove(event) {
-  event.preventDefault();
-  const rect = canvas.getBoundingClientRect();
-  touch.x = event.changedTouches[0].clientX - rect.left;
-  touch.y = event.changedTouches[0].clientY - rect.top;
 }
 
 // Fire bullet
@@ -184,9 +210,10 @@ function checkCollisions() {
     }
   }
 
-  if (aliens.length === 2) {
+if(aliens.length === 2)
+{
     createAliens();
-  }
+}
 }
 
 // Reset the game
@@ -242,8 +269,8 @@ function draw() {
   // Draw opponent attacks
   for (let i = 0; i < opponentAttacks.length; i++) {
     const opponentAttack = opponentAttacks[i];
-    context.drawImage(
-      bullet_img,
+    context.fillStyle = 'red';
+    context.fillRect(
       opponentAttack.x,
       opponentAttack.y,
       BULLET_WIDTH,
@@ -251,33 +278,28 @@ function draw() {
     );
   }
 
-  // Draw score and lives
+  // Draw score
   context.fillStyle = 'white';
   context.font = '24px Arial';
   context.fillText('Score: ' + score, 10, 30);
-  context.fillText('Lives: ' + lives, 10, 60);
+
+  // Draw lives
+  context.fillText('Lives: ' + lives, WINDOW_WIDTH - 100, 30);
 }
 
-// Update the game
-function update() {
-  // Move spaceship
-  if (keys['ArrowLeft'] && spaceship.x > 0) {
+// Update spaceship position
+function updateSpaceship() {
+  if (keys.ArrowLeft && spaceship.x > 0) {
     spaceship.x -= SPACESHIP_SPEED;
-  } else if (
-    keys['ArrowRight'] &&
-    spaceship.x < WINDOW_WIDTH - SPACESHIP_WIDTH
-  ) {
-    spaceship.x += SPACESHIP_SPEED;
-  } else if (keys['ArrowUp'] && spaceship.y > 0) {
-    spaceship.y -= SPACESHIP_SPEED;
-  } else if (
-    keys['ArrowDown'] &&
-    spaceship.y < WINDOW_HEIGHT - SPACESHIP_HEIGHT
-  ) {
-    spaceship.y += SPACESHIP_SPEED;
   }
 
-  // Move aliens
+  if (keys.ArrowRight && spaceship.x < WINDOW_WIDTH - SPACESHIP_WIDTH) {
+    spaceship.x += SPACESHIP_SPEED;
+  }
+}
+
+// Update aliens position
+function updateAliens() {
   for (let i = 0; i < aliens.length; i++) {
     const alien = aliens[i];
     alien.x += ALIEN_SPEED * alien.direction;
@@ -286,36 +308,50 @@ function update() {
       alien.y += ALIEN_HEIGHT;
     }
   }
+}
 
-  // Move bullets
-  for (let i = 0; i < bullets.length; i++) {
+// Update bullets position
+function updateBullets() {
+  for (let i = bullets.length - 1; i >= 0; i--) {
     const bullet = bullets[i];
     bullet.y -= BULLET_SPEED;
-    if (bullet.y < 0) {
+    if (bullet.y <= 0) {
       bullets.splice(i, 1);
     }
   }
+}
 
-  // Move opponent attacks
-  for (let i = 0; i < opponentAttacks.length; i++) {
+// Update opponent attacks position
+function updateOpponentAttacks() {
+  for (let i = opponentAttacks.length - 1; i >= 0; i--) {
     const opponentAttack = opponentAttacks[i];
     opponentAttack.y += BULLET_SPEED;
-    if (opponentAttack.y > WINDOW_HEIGHT) {
+    if (opponentAttack.y >= WINDOW_HEIGHT) {
       opponentAttacks.splice(i, 1);
     }
   }
+}
 
-  // Randomly fire opponent attacks
+// Opponent attacks
+function opponentAttacksLogic() {
   if (Math.random() < OPPONENT_ATTACK_RATE) {
-    const randomAlien = aliens[Math.floor(Math.random() * aliens.length)];
-    createOpponentAttack(randomAlien.x + ALIEN_WIDTH / 2, randomAlien.y);
+    const randomAlienIndex = Math.floor(Math.random() * aliens.length);
+    const randomAlien = aliens[randomAlienIndex];
+    createOpponentAttack(
+      randomAlien.x + ALIEN_WIDTH / 2,
+      randomAlien.y + ALIEN_HEIGHT
+    );
   }
 }
 
 // Game loop
 function gameLoop() {
-  update();
+  updateSpaceship();
+  updateAliens();
+  updateBullets();
+  updateOpponentAttacks();
   checkCollisions();
+  opponentAttacksLogic();
   draw();
   requestAnimationFrame(gameLoop);
 }
