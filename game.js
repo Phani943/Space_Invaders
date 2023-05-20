@@ -130,6 +130,10 @@ function handleKeyDown(event) {
 // Handle keyup event
 function handleKeyUp(event) {
   keys[event.code] = false;
+
+  if(event.code === 'ArrowLeft' || event.code === 'ArrowRight'){
+    spaceship.x += 0;
+  }
 }
 
 // Fire bullet
@@ -210,7 +214,7 @@ function checkCollisions() {
     }
   }
 
-if(aliens.length === 2)
+if(aliens.length <= 2)
 {
     createAliens();
 }
@@ -220,8 +224,13 @@ if(aliens.length === 2)
 function resetGame() {
   spaceship.x = WINDOW_WIDTH / 2 - SPACESHIP_WIDTH / 2;
   spaceship.y = WINDOW_HEIGHT - SPACESHIP_HEIGHT - 10;
+  aliens = [];
+  createAliens();
   bullets = [];
   opponentAttacks = [];
+
+  keys.ArrowLeft = false;
+  keys.ArrowRight = false;
 }
 
 // Game over
