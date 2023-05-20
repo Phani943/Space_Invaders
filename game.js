@@ -11,7 +11,7 @@ const ALIEN_COUNT = 10;
 const BULLET_WIDTH = 8;
 const BULLET_HEIGHT = 16;
 const BULLET_SPEED = 5;
-const OPPONENT_ATTACK_RATE = 0.02;
+const OPPONENT_ATTACK_RATE = 0.05;
 
 // Game elements
 const canvas = document.getElementById('game-canvas');
